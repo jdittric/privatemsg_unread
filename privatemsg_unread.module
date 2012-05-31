@@ -1,0 +1,100 @@
+<?php
+
+/**
+ * @file
+ * Module file for privatemsg_unread.module
+ * Allows a user to view whether a PM they sent has been read.
+ */
+
+/**
+ * Implements hook_perm().
+ */
+function privatemsg_unread_perm() {
+  $perms = array(
+    'access privatemsg unread', 
+  );
+  return $perms;
+}
+
+ 
+function privatemsg_unread_fetch() {
+  //Get the $user object to examine the uid of the current user.
+  global $user;
+  $uid = $user->uid;
+  $result = db_query("
+    SELECT {users.name}, {pm_message.subject}, {pm_message.timestamp}
+    FROM {pm_index} 
+    LEFT JOIN {pm_message}
+    ON {pm_index.mid} = {pm_message.mid}
+    LEFT JOIN {users} 
+    ON {pm_index.recipient} = {users.uid}
+    WHERE {pm_index.is_new} = 1 
+    AND {pm_message.author} = %d 
+    AND {pm_index.recipient} != %d
+    ORDER BY {pm_message.timestamp} DESC" , $uid, $uid);
+
+  return $result;
+}
+
+
+/**
+ * Implements hook_menu().
+ */
+function privatemsg_unread_menu() {
+  $items['privatemsg/unread'] = array(
+    'title' => 'Unread PMs',
+    'description' => 'Allow users to see private message read status (return receipt).',
+    'access arguments' => array('access privatemsg unread'),
+    'page callback' => 'privatemsg_unread_view',
+    'type' => MENU_NORMAL_ITEM ,
+  );
+  return $items;
+}
+
+
+/**
+ * Implements hook_block().
+ */
+function privatemsg_unread_block($op = 'list', $delta = 0, $edit = array()) {
+  $blocks['unread private messages']= array (
+    'info' => t('Unread Private Messages'),
+    'cache' => DRUPAL_NO_CACHE
+  );
+  return $blocks;
+}
+
+/**
+ * Implements hook_view().
+ */
+function privatemsg_unread_view() {
+  if(user_access('access privatemsg unread')) {
+    $block = array();
+    $result = privatemsg_unread_fetch();
+    
+    //UNSAFE: reportedly, this only works with mysqli
+    $nummsgs = $result->num_rows;
+
+    //Display the summary table.
+    $output = "<table>";
+    $output .= "<tr><th>Recipient</th><th>Subject</th><th>Date</th><\tr>";
+    while ($row = db_fetch_array($result)) {
+      $timestamp = $row['timestamp'];
+      $msgdate = new DateTime("@$timestamp");
+      $row['timestamp'] = $msgdate->format('Y-m-d H:i:s');
+      $output .= "<tr><td>" . $row['name'] . "</td><td>" . $row['subject'] . "</td><td>" . $row['timestamp'] . "</td></tr>";
+    }
+    $output .= "</table>";
+ 
+    if ($nummsgs > 0){
+      //a crude hack to get rid of mystery output error
+      $pattern = '/<\s+[r]>/';
+      $replacement = '';
+      $output = preg_replace($pattern, $replacement, $output);
+      
+      $output = "<h3>Unread private messages you have sent:</h3>" . $output;
+    }else{
+      $output = "<h3>All of your sent messages have been read.</h3>";
+    }
+    return $output;
+  }
+}

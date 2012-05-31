@@ -1,0 +1,5 @@
+name = Privatemsg unread
+description = Allow users to see private message read status (return receipt)
+package = Mail
+core = 6.x
+dependencies[] = privatemsg
