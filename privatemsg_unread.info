@@ -1,4 +1,4 @@
-name = Privatemsg unread
+name = Privatemsg_unread
 description = Allow users to see private message read status (return receipt)
 package = Mail
 core = 6.x

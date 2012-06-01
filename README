@@ -1,0 +1,5 @@
+This is a simple helper module for Privatemsg to address a feature request in the Privatemsg module issue queue. It provides a menu item "Unread PMs", which will display a node with the current user's sent Private Messages that have yet to be read. This does not include PMs that a user sends to themselves, by design. A Permissions item has been provided so that this functionality may be enabled or disabled on a per-role basis.
+
+This helper module is working with the current (as of 2012-06-01) development branch of Privatemsg 6.x-2.x. Install it into the sites/all/modules/privatemsg directory.
+
+Since this is my first commit (Hooray!) and I am new to module development, if you have any comments or criticisms about the code, please feel free to contact me or post to the issue queue.
